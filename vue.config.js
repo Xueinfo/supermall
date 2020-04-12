@@ -1,5 +1,5 @@
-export default{
-    configuerwebpack:{
+module.exports = {
+    configureWebpack:{
         resolve:{
             alias:{
                 "assest":"src/assets",
