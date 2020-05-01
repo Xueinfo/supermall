@@ -1,39 +1,204 @@
 <template>
-    <div>
+    <div id="home">
+        <!-- 顶部 -->
         <navbar class="nav">
             <div slot="center">
                 购物车
             </div>
         </navbar>
+        <!--伪吸顶-->
+        <tab-control 
+            :titles="['流行','新品','精选']"
+            @tabControl_click="controlClick" 
+            v-show="showTabCon"
+            class="tabControl"
+             ref="tabControlTop1"
+        />
+        <!-- better Scroll start-->
+        <scroll class="content" 
+        :pullUpLoad="true"
+        :probeType=3
+        @pullingUp="scrollPull"
+        ref="scroll"
+        @scrollPos="scrollPosition"
+        >
+            <!-- 滚动banner图 -->
+            <home-swiper :banners="banners" @swiperImgLoad="bannerLoad"/>
+            <!-- 推荐位 -->
+            <recommend :recommends="recommends" />
+            <!--  -->
+            <feature />
+            <!-- 商品小导航  -->
+            <tab-control :titles="['流行','新品','精选']"
+            @tabControl_click="controlClick" 
+            ref="tabControlTop"
+            />
+            <!-- 商品列表 -->
+            <goods-list :goodslist="goods[currentType]" />
+        </scroll>
+        <!-- better Scroll end-->
+        <!-- 返回顶部 -->
+        <back-top v-show="showTop" @click.native="BackTop" />
+
+       
     </div>
 </template>
 <script>
-import navbar from "components/common/navbar/NavBar"
-import {getHomeMultidata} from "network/home"
+
+// 网络请求
+import {getHomeMultidata,getHomeGoods} from "network/home";
+// 组件
+import navbar from "components/common/navbar/NavBar";
+import HomeSwiper from "./childComps/HomeSwiper";
+import recommend from "./childComps/Recommend"
+import feature from "./childComps/Feature"
+import TabControl from "components/content/TabControl"
+import GoodsList from "components/content/goodsList/GoodsList"
+import Scroll from "components/common/scroll/Scroll"
+import BackTop from "components/content/BackTop"
+// 常量
+import {POP,NEW,SELL,BACKTOP_DISTANCE} from "common/const"
+
 
 export default {
     name:"home",
     components:{
-        navbar
+        navbar,
+        HomeSwiper,
+        recommend,
+        feature,
+        TabControl,
+        GoodsList,
+        Scroll,
+        BackTop
     },
     data(){
         return{
             banners:[],
-            recommends:[]
+            recommends:[],
+            goods:{
+                'pop':{page:0,list:[]},
+                'new':{page:0,list:[]},
+                'sell':{page:0,list:[]}
+            },
+            currentType:'pop',
+            showTop:false,
+            showTabCon:false,
+            tabControlTopHeight:0
         }
     },
     created(){
-        getHomeMultidata().then(res=>{
-            console.log(res)
-            this.banners=res.data.banners;
-            this.recommends=res.data.recommends;
+        this.getHomeMulti()
+        this.getgoods(POP)
+        this.getgoods(NEW)
+        this.getgoods(SELL)
+    },
+    mounted(){
+        // 总事件线：
+        const refresh = this.debounce(this.$refs.scroll.refresh,500)
+        this.$bus.$on("goodimgLoad",()=>{
+            refresh()
         })
+    },
+    methods:{
+        // 返回顶部：
+        BackTop(){
+            // console.log("0000")
+            this.$refs.scroll.backTop(0,0,500)
+        },
+        // 防抖函数
+        debounce(func,delay){
+            let timer = null
+            return function(...args){
+                if(timer) clearTimeout(timer)       
+                timer = setTimeout(()=>{
+                    func.apply(this,args)
+                },delay)
+            }
+        },
+        
+        // 监听事件：
+        // 监听banner图是否加载出来
+        bannerLoad(){
+            // 获取 最初tabControl 距离顶的高度
+          this.tabControlTopHeight =  this.$refs.tabControlTop.$el.offsetTop
+        },
+        // 监听滑动：
+        scrollPosition(position){
+            // console.log(position)
+            this.showTop = -position.y > BACKTOP_DISTANCE
+            // tabControl 距离顶的实时高度 对比 最初高度 tabControlTopHeight
+            this.showTabCon = -position.y > this.tabControlTopHeight
+        },
+        // 上啦加载更多
+        scrollPull(){
+            this.getgoods(this.currentType)
+            console.log("上啦加载更多")
+        },
+        // 监听点击的流行、新品、精选
+        controlClick(index){
+            
+            switch(index){
+                case 0:
+                    this.currentType = POP
+                break
+                case 1:
+                    this.currentType = NEW
+                break
+                case 2:
+                    this.currentType = SELL
+            }
+            this.$refs.tabControlTop1.currentIndex=index
+            this.$refs.tabControlTop.currentIndex = index
+        },
+        // 网络请求：
+        // 获取banner图 推荐位信息
+        getHomeMulti(){
+            getHomeMultidata().then(res=>{
+                console.log(res)
+                this.banners=res.data['banner'].list;
+                this.recommends=res.data['recommend'].list;
+                // console.log(this.recommends)
+                
+            })
+        },
+        // 获取商品列表信息
+        getgoods(type){
+            let page = this.goods[type].page+1
+            getHomeGoods(type,page).then(res=>{
+                // console.log(res.data)
+                this.goods[type].list.push(...res.data.list)
+                this.goods[type].page+=1;
+                // 完成上啦加载更多
+                this.$refs.scroll.finishPull()
+            })
+            
+        }
+
     }
 }
 </script>
 <style scoped>
+#home{
+    height: 100vh;
+}
 .nav{
     background-color: var(--color-tint);
     color: #fff;
+}
+.content{
+    position: absolute;
+    top: 43px;
+    bottom:49px ;
+    left: 0;
+    right: 0;
+    overflow: hidden;
+}
+.tabControl{
+    position: absolute;
+    top:42px;
+    right: 0;
+    left: 0;
+    z-index: 9;
 }
 </style>
