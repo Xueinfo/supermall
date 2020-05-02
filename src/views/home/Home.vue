@@ -15,10 +15,11 @@
              ref="tabControlTop1"
         />
         <!-- better Scroll start-->
+        
         <scroll class="content" 
-        :pullUpLoad="true"
-        :probeType=3
+        :pullUpLoad="datapullUpLoad"
         @pullingUp="scrollPull"
+        :probeType=3
         ref="scroll"
         @scrollPos="scrollPosition"
         >
@@ -74,32 +75,62 @@ export default {
     },
     data(){
         return{
+            // banner图列表数据
             banners:[],
+            // 存储推荐位信息
             recommends:[],
+            // 用来存储商品数据
             goods:{
                 'pop':{page:0,list:[]},
                 'new':{page:0,list:[]},
                 'sell':{page:0,list:[]}
             },
+            // 当前展示的商品类别  是流行 还是 新品 还是 精选
             currentType:'pop',
+            // 控制返回顶部 是否显示 false 不显示
             showTop:false,
+            // 控制 伪吸顶 是否显示 false 不显示
             showTabCon:false,
-            tabControlTopHeight:0
+            // 用来记录商品导航初始Y轴位置
+            tabControlTopHeight:0,
+            // 用来记录离开时的Y轴位置
+            saveY:0,
+            // 
+            datapullUpLoad:true
         }
     },
+    // 周期函数
     created(){
+        // html加载完成之前
         this.getHomeMulti()
         this.getgoods(POP)
         this.getgoods(NEW)
         this.getgoods(SELL)
+        // console.log("created")
+    },
+    activated(){
+        // 页面处于活跃时调用，在created之后调用
+        this.$refs.scroll.scrollTo(0,this.saveY)
+         this.$refs.scroll.refresh()
     },
     mounted(){
+        // html加载完成后执行
         // 总事件线：
         const refresh = this.debounce(this.$refs.scroll.refresh,500)
         this.$bus.$on("goodimgLoad",()=>{
             refresh()
         })
     },
+    deactivated(){
+        // 页面处于不活跃时 调用  离开页面时
+        this.saveY = this.$refs.scroll.scroll.y
+        // console.log(this.saveY)
+    },
+    destroyed(){
+        // Vue实例销毁后调用，离开Home组件后调用  即去另外一个页面时，但若加了keepalive则不会调用该生命周期函数
+        console.log("home destroy")
+    },
+    
     methods:{
         // 返回顶部：
         BackTop(){
@@ -133,7 +164,7 @@ export default {
         // 上啦加载更多
         scrollPull(){
             this.getgoods(this.currentType)
-            console.log("上啦加载更多")
+            console.log("上啦加载更多111")
         },
         // 监听点击的流行、新品、精选
         controlClick(index){

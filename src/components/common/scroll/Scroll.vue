@@ -47,15 +47,24 @@ export default {
                     this.$emit("scrollPos",position)
                 })
         },
+        // 完成上啦加载
         finishPull(){
            this.scroll && this.scroll.finishPullUp && this.scroll.finishPullUp()
         },
+        // 刷新better-scroll
         refresh(){
             this.scroll && this.scroll.refresh && this.scroll.refresh()
         },
         // 返回顶部
-        backTop(x,y,time){
+        backTop(x,y,time=300){
             this.scroll && this.scroll.scrollTo(x,y,time)
+        },
+        // 获取y轴的位置
+        getY(){
+            return this.scroll?this.scroll.y:0
+        },
+        scrollTo(x,y,time=0){
+            this.scroll && this.scroll.scrollTo(x,y)
         }
     }
 }
