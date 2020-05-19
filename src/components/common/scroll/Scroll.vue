@@ -53,6 +53,7 @@ export default {
         },
         // 刷新better-scroll
         refresh(){
+            console.log("----")
             this.scroll && this.scroll.refresh && this.scroll.refresh()
         },
         // 返回顶部

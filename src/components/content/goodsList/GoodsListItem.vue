@@ -1,14 +1,14 @@
 <template>
-    <div class="goods-item">
-        <a href="">
-            <img :src="itemList.show.img" alt="" @load="goodsimgLoad">
+    <div class="goods-item" @click="go_detail">
+        <!-- <a href=""> -->
+            <img :src="showimg" alt="" @load="goodsimgLoad">
             <div class="goods-info">
                 <p>{{itemList.title}}</p>
                 <span class="price">{{itemList.price}}</span>
                 <span class="cfav">{{itemList.cfav}}</span>
             </div>
             
-        </a>
+        <!-- </a> -->
     </div>
 </template>
 <script>
@@ -25,8 +25,21 @@ export default {
         // console.log(this.itemList)
     },
     methods:{
+        // 监听图片加载 发送事件总线
         goodsimgLoad(){
+            // 因当前页面 首页和详情页都有使用
+            // 可以通过判断路由来设置监听函数  this.$router.path.indexOf("/home")
+            // 但也可以不更改此页面而且首页和详情页 取消事件总线监听的函数
             this.$bus.$emit("goodimgLoad")
+        },
+        go_detail(){
+            console.log("go_detail")
+            this.$router.push("/detail/" + this.itemList.iid)
+        }
+    },
+    computed:{
+        showimg(){
+            return this.itemList.image || this.itemList.show.img 
         }
     }
 }

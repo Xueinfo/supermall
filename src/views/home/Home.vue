@@ -3,7 +3,7 @@
         <!-- 顶部 -->
         <navbar class="nav">
             <div slot="center">
-                购物车
+                美丽说
             </div>
         </navbar>
         <!--伪吸顶-->
@@ -59,6 +59,9 @@ import Scroll from "components/common/scroll/Scroll"
 import BackTop from "components/content/BackTop"
 // 常量
 import {POP,NEW,SELL,BACKTOP_DISTANCE} from "common/const"
+import {debounce} from "common/utils"
+// 混入使用
+import {itemImgMixin} from "common/mixin"
 
 
 export default {
@@ -73,6 +76,7 @@ export default {
         Scroll,
         BackTop
     },
+    mixins:[itemImgMixin],
     data(){
         return{
             // banner图列表数据
@@ -114,17 +118,25 @@ export default {
          this.$refs.scroll.refresh()
     },
     mounted(){
+        // 此处使用混入了  mixins
         // html加载完成后执行
         // 总事件线：
-        const refresh = this.debounce(this.$refs.scroll.refresh,500)
-        this.$bus.$on("goodimgLoad",()=>{
-            refresh()
-        })
+        // const refresh = debounce(this.$refs.scroll.refresh,100)
+        // // 为了在离开当前页面时取消监听时间总监函数
+        // this.itemImgsListener = ()=>{
+        //     refresh()
+            
+        // }
+        // // 监听事件总线函数
+        // this.$bus.$on("goodimgLoad",this.itemImgsListener)
     },
     deactivated(){
-        // 页面处于不活跃时 调用  离开页面时
+        // 页面处于不活跃时 调用  离开页面时 前台是在使用keep-alive前提下会调用
         this.saveY = this.$refs.scroll.scroll.y
         // console.log(this.saveY)
+        // 离开页面时取消事件总线监听函数 this.$bus.$off("监听的函数名"，"监听函数执行的函数名")
+        this.$bus.$off("goodimgLoad",this.itemImgsListener)
+        
     },
     destroyed(){
         // Vue实例销毁后调用，离开Home组件后调用  即去另外一个页面时，但若加了keepalive则不会调用该生命周期函数
@@ -138,15 +150,15 @@ export default {
             this.$refs.scroll.backTop(0,0,500)
         },
         // 防抖函数
-        debounce(func,delay){
-            let timer = null
-            return function(...args){
-                if(timer) clearTimeout(timer)       
-                timer = setTimeout(()=>{
-                    func.apply(this,args)
-                },delay)
-            }
-        },
+        // debounce(func,delay){
+        //     let timer = null
+        //     return function(...args){
+        //         if(timer) clearTimeout(timer)       
+        //         timer = setTimeout(()=>{
+        //             func.apply(this,args)
+        //         },delay)
+        //     }
+        // },
         
         // 监听事件：
         // 监听banner图是否加载出来
